@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, RecordWildCards #-}
 {-| (@.Internal@ modules may violate the PVP) -}
-module Derive.Monoid.Internal where 
+module Derive.List.Internal where 
 import Data.Semigroup 
 
 import Language.Haskell.TH

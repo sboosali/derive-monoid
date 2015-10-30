@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, OverloadedLists #-}
 {-# OPTIONS_GHC -ddump-splices #-} -- for debugging 
-module Build.IsList where 
-import Derive.Monoid
+module Build.Derive.List.IsList where 
+import Derive.List
 import GHC.Exts (IsList (..))
 
 data Elisp

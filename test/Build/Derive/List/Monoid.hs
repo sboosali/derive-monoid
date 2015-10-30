@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -ddump-splices #-} -- for debugging 
-module Build.Monoid where 
-import Derive.Monoid
+module Build.Derive.List.Monoid where 
+import Derive.List
 import Data.Semigroup 
 
 data Elisp

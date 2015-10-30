@@ -1,4 +1,4 @@
 module Main where
-import Build() 
+import Build.Derive.List() 
 
 main = return() 

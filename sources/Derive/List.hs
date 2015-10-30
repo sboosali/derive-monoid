@@ -1,6 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
-module Derive.Monoid
+module Derive.List 
  ( -- $introduction
 
    -- $example
@@ -19,7 +19,7 @@ module Derive.Monoid
    -- $alternatives
 
  ) where 
-import Derive.Monoid.Internal 
+import Derive.List.Internal 
 
 
 
@@ -76,7 +76,7 @@ deriveList ''T 'C
 --  ('<>') x y = ElispSexp (toElispList x '<>' toElispList y)
 -- 
 -- instance 'Monoid' Elisp where
---  'mempty' = EmptyElisp
+--  'mempty' = emptyElisp
 --  'mappend' = ('<>')
 -- 
 -- instance 'IsList' Elisp where

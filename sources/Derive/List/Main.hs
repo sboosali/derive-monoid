@@ -5,8 +5,8 @@
 {-| (see source) 
 
 -}
-module Derive.Monoid.Main where 
-import Derive.Monoid.Internal 
+module Derive.List.Main where 
+import Derive.List.Internal 
 
 import Data.Semigroup 
 

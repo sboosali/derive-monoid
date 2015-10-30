@@ -21,9 +21,9 @@ library
  default-language: Haskell2010
 
  exposed-modules:
-  Derive.Monoid
-  Derive.Monoid.Internal 
-  Derive.Monoid.Main
+  Derive.List
+  Derive.List.Internal 
+  Derive.List.Main
 
  build-depends:
     base ==4.8.* 
@@ -41,16 +41,16 @@ executable example
 
 
 test-suite tests
- hs-source-dirs: tests 
+ hs-source-dirs: test 
  main-is: Tests.hs
  type: exitcode-stdio-1.0
  default-language: Haskell2010
 
  other-modules:
-  Build 
-  Build.Monoid   
-  Build.Semigroup
-  Build.IsList
+  Build.Derive.List 
+  Build.Derive.List.Monoid   
+  Build.Derive.List.Semigroup
+  Build.Derive.List.IsList
 
  build-depends:
     base ==4.8.* 
