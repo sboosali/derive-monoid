@@ -1,10 +1,11 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes, RecordWildCards, LambdaCase #-}
 {-| (@.Internal@ modules may violate the PVP) -}
 module Derive.List.Internal where 
 import Data.Semigroup 
 
 import Language.Haskell.TH
 import GHC.Exts (IsList (..))
+import Control.Monad
 
 
 data DeriveListConfig = DeriveListConfig
@@ -114,7 +115,7 @@ deriveSemigroup_ DeriveListNames{..} = do
        {-# INLINEABLE (<>) #-} |]
 
  where 
- theTypeT = conT theType 
+ theTypeT = saturateT theType 
  theAppendE = varE theAppend 
 
 
@@ -134,7 +135,7 @@ deriveMonoid_ DeriveListNames{..} = do
       {-# INLINEABLE mappend #-} |]
 
  where 
- theTypeT = conT theType 
+ theTypeT = saturateT theType 
  theEmptyE = varE theEmpty 
  theAppendE = varE theAppend 
 
@@ -156,7 +157,7 @@ deriveIsList_ DeriveListNames{..} = do
       {-# INLINEABLE toList #-} |]
 
  where 
- theTypeT = conT theType 
+ theTypeT = saturateT theType 
  theConstructorE = conE theConstructor 
  theToListE = varE theToList 
 
@@ -169,7 +170,7 @@ makeEmpty DeriveListNames{..} = return [definitionD, inlinableD]
  where 
  definitionD = FunD theEmpty [Clause [] (NormalB bodyE) []]
  bodyE = ConE theConstructor `AppE` (ListE [])
- inlinableD = PragmaD (InlineP theEmpty Inlinable ConLike AllPhases)
+ inlinableD = PragmaD (InlineP theEmpty Inlinable ConLike AllPhases) -- TODO ConLike?
 
 -- makeEmpty :: DeriveListNames -> DecsQ
 -- makeEmpty DeriveListNames{..} = patternQD 
@@ -248,3 +249,97 @@ defaultDeriveListConfig = DeriveListConfig{..}
  _getToListName = (\typename -> "to"<>typename<>"List")
  -- _usePatternSynonyms = True
  -- _useSemigroup = True
+
+
+{-| saturates a type constructor with type variables. outputs a 'Type' of kind @*@. 
+
+>>> :set -XTemplateHaskell  
+>>> import Language.Haskell.TH
+>>> $(printQ (saturateT ''Bool))
+ConT GHC.Types.Bool 
+>>> $(printQ (saturateT ''[]))
+AppT (ConT GHC.Types.[]) (VarT a)
+>>> $(printQ (saturateT ''Either))
+AppT (AppT (ConT Data.Either.Either) (VarT a)) (VarT b)
+
+-- >>> $(printQ (saturateT_ 'False))
+-- Exception when trying to run compile-time code:
+--   the name {{GHC.Types.False}} has no arity (maybe it's been given to some macro that expects a Type?)
+
+-}
+saturateT :: Name -> Q Type 
+-- saturateT = conT
+saturateT n = do
+ arity_ <- getArityT n
+ let arity = maybe (error$ messageNoArity n) id arity_
+ unless (arity <= 26) $ (error$ messageHugeArity n)
+ let arguments = take arity (map (mkName . (:[])) ['a'..'z']) 
+ return$ foldl AppT (ConT n) (VarT <$> arguments) 
+ where 
+ messageNoArity n = "the name {{" <> show n <> "}} has no arity (maybe it's been given to some macro that expects a Type?)"
+ messageHugeArity n = "the name {{" <> show n <> "}} has too big an arity (over 26)"
+
+
+
+{-| get the arity of a (type) name. 
+
+>>> :set -XTemplateHaskell  
+>>> import Language.Haskell.TH
+>>> $(printQ (getArityT ''Bool))
+Just 0
+>>> $(printQ (getArityT 'False))
+Nothing
+>>> $(printQ (getArityT ''Either))
+Just 2
+
+-}
+getArityT :: Name -> Q (Maybe Int)
+getArityT n = getArityI <$> reify n 
+
+
+{-| get the arity of a type constructor or a primitive type constructor, by name. 
+
+-}
+getArityI :: Info -> Maybe Int
+getArityI = \case 
+ TyConI d -> getArityD d
+ PrimTyConI _ arity _ -> Just arity
+ _ -> Nothing 
+
+
+{-| get the arity of a @data@ or a @newtype@. 
+
+TODO saturate @type@ synonym0
+
+-}
+getArityD :: Dec -> Maybe Int
+getArityD = \case 
+ DataD    _ _ variables _ _ -> Just (length variables)
+ NewtypeD _ _ variables _ _ -> Just (length variables)
+ -- TySynD Name [TyVarBndr] Type
+ _ -> Nothing 
+
+
+{-| show the result of a Template Haskell action, in IO.
+
+>>> :set -XTemplateHaskell  
+>>> import Language.Haskell.TH
+>>> $(printQ $ reify ''Bool)
+TyConI (DataD [] GHC.Types.Bool [] [NormalC GHC.Types.False [],NormalC GHC.Types.True []] [])
+
+works around @"Template Haskell error: Can't do `reify' in the IO monad"@, 
+which prevents them from being printed directly.  
+
+see <http://stackoverflow.com/questions/16690925/template-haskell-reify-in-ghci stackoverflow>
+
+-}
+printQ :: (Show a) => Q a -> Q Exp
+printQ q = go <$> q
+ where 
+ go x = VarE 'putStrLn `AppE` (LitE . StringL . show) x
+
+-- getVariableName :: TyVarBndr -> Name 
+-- getVariableName = \case 
+--  PlainTV name    -> name 	
+--  KindedTV name _ -> name 
+

@@ -51,6 +51,7 @@ test-suite tests
   Build.Derive.List.Monoid   
   Build.Derive.List.Semigroup
   Build.Derive.List.IsList
+  Build.Derive.List.HigherKind
 
  build-depends:
     base ==4.8.* 

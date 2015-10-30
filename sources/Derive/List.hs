@@ -121,6 +121,20 @@ toElispList :: Elisp -> [Elisp]
 @
 
 
+= Kind
+
+works on type constructors of any kind. that is, a polymorphic @Elisp@ would work too:  
+
+@
+data Elisp a 
+ = ElispAtom a 
+ | ElispSexp [Elisp]
+
+'deriveList' \'\'Elisp \'ElispSexp
+
+@
+
+
 = Selecting Instances 
 if you don't want all three instances, you can use one of: 
 

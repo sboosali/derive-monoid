@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, OverloadedLists #-} -- TODO PatternSynonyms, 
-{-# OPTIONS_GHC -ddump-splices -fno-warn-missing-signatures #-} -- for debugging 
+-- {-# OPTIONS_GHC -ddump-splices #-}  -- for debugging 
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-} 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-| (see source) 
@@ -10,7 +11,8 @@ import Derive.List.Internal
 
 import Data.Semigroup 
 
-import           GHC.Exts                          (IsList (..))
+import GHC.Exts (IsList (..))
+import Language.Haskell.TH
 
 
 data Elisp
