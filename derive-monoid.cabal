@@ -24,6 +24,7 @@ library
   Derive.List
   Derive.List.Internal 
   Derive.List.Main
+  Derive.List.Extra 
 
  build-depends:
     base ==4.8.* 
