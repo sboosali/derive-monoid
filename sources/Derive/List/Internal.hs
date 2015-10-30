@@ -8,8 +8,9 @@ import GHC.Exts (IsList (..))
 
 
 data DeriveListConfig = DeriveListConfig
- { _makeEmptyName  :: String -> String 
- , _makeToListName :: String -> String 
+ { _getEmptyName  :: String -> String 
+ , _getAppendName :: String -> String 
+ , _getToListName :: String -> String 
  -- , _usePatternSynonyms :: Bool
  -- , _useSemigroup :: Bool
  }
@@ -18,6 +19,7 @@ data DeriveListNames = DeriveListNames
  { theType :: Name 
  , theConstructor :: Name 
  , theEmpty :: Name 
+ , theAppend :: Name 
  , theToList :: Name 
  } deriving (Show,Eq,Ord)
 
@@ -55,6 +57,7 @@ deriveListWith config@DeriveListConfig{..} theType theConstructor = fmap concat 
  , deriveMonoid_ names 
  , deriveIsList_ names 
  , makeEmpty names 
+ , makeAppend names 
  , makeToList names 
  ] 
  where 
@@ -65,9 +68,9 @@ deriveListWith config@DeriveListConfig{..} theType theConstructor = fmap concat 
 -}
 deriveMonoidWith :: DeriveListConfig -> Name -> Name -> DecsQ 
 deriveMonoidWith config@DeriveListConfig{..} theType theConstructor = fmap concat . traverse id $ 
- [ deriveSemigroup_ names 
- , deriveMonoid_ names 
+ [ deriveMonoid_ names 
  , makeEmpty names 
+ , makeAppend names 
  , makeToList names 
  ] 
  where 
@@ -79,6 +82,7 @@ deriveMonoidWith config@DeriveListConfig{..} theType theConstructor = fmap conca
 deriveSemigroupWith :: DeriveListConfig -> Name -> Name -> DecsQ 
 deriveSemigroupWith config@DeriveListConfig{..} theType theConstructor = fmap concat . traverse id $ 
  [ deriveSemigroup_ names 
+ , makeAppend names 
  , makeToList names 
  ] 
  where 
@@ -100,36 +104,39 @@ deriveIsListWith config@DeriveListConfig{..} theType theConstructor = fmap conca
 
 needs no constraints.
  
-assumes 'makeToList'
+assumes 'makeAppend'
 
 -}
 deriveSemigroup_ :: DeriveListNames -> DecsQ 
 deriveSemigroup_ DeriveListNames{..} = do 
  [d| instance Semigroup $theTypeT where
-       (<>) x y = $theConstructorE ($theToListE x <> $theToListE y) |]
+       (<>) = $theAppendE |]
 
  where 
  theTypeT = conT theType 
- theConstructorE = conE theConstructor 
- theToListE = varE theToList 
+ theAppendE = varE theAppend 
 
+-- TODO pragmas 
+
+-- TODO no signatures 
 
 {-| 
 
 needs no constraints.
 
-assumes 'deriveSemigroup_', 'makeEmpty'
+assumes 'makeAppend', 'makeEmpty'
 
 -}
 deriveMonoid_ :: DeriveListNames -> DecsQ 
 deriveMonoid_ DeriveListNames{..} = do 
  [d| instance Monoid $theTypeT where
       mempty = $theEmptyE
-      mappend = (<>) |]
+      mappend = $theAppendE |]
 
  where 
  theTypeT = conT theType 
  theEmptyE = varE theEmpty 
+ theAppendE = varE theAppend 
 
 
 {-| 
@@ -175,6 +182,23 @@ makeEmpty DeriveListNames{..} = return [signatureD, definitionD]
 -- [d|pattern $theEmptyQP = $theConstructorQE []|] 
 
 
+{-| 
+
+assumes 'makeToList'
+
+-}
+makeAppend :: DeriveListNames -> DecsQ
+makeAppend DeriveListNames{..} = do
+ [d| $theAppendP = \x y -> $theConstructorE ($theToListE x <> $theToListE y) |]
+
+ where 
+ theConstructorE = conE theConstructor 
+ theToListE = varE theToList 
+ theAppendP = varP theAppend 
+
+ -- [d| $theAppendP x y = $theConstructorE ($theToListE x <> $theToListE y) |]
+
+
 makeToList :: DeriveListNames -> DecsQ
 makeToList DeriveListNames{..} = traverse id [signatureD, definitionD]
  where 
@@ -209,8 +233,9 @@ print $ makeDeriveListNames 'defaultDeriveListConfig' \'\'T \'C
 makeDeriveListNames :: DeriveListConfig -> Name -> Name -> DeriveListNames
 makeDeriveListNames DeriveListConfig{..} theType theConstructor = DeriveListNames{..}
  where 
- theEmpty  = mkName $ _makeEmptyName  (nameBase theType) 
- theToList = mkName $ _makeToListName (nameBase theType) 
+ theEmpty  = mkName $ _getEmptyName  (nameBase theType) 
+ theAppend = mkName $ _getAppendName (nameBase theType) 
+ theToList = mkName $ _getToListName (nameBase theType) 
 
 
 {-| by default, the functions generated for a type @"T"@ are @"emptyT"@ and @"toTList"@. 
@@ -219,7 +244,8 @@ makeDeriveListNames DeriveListConfig{..} theType theConstructor = DeriveListName
 defaultDeriveListConfig :: DeriveListConfig 
 defaultDeriveListConfig = DeriveListConfig{..}
  where
- _makeEmptyName = (\typename -> "empty"<>typename)
- _makeToListName  = (\typename -> "to"<>typename<>"List")
+ _getEmptyName  = (\typename -> "empty"<>typename)
+ _getAppendName = (\typename -> "append"<>typename)
+ _getToListName = (\typename -> "to"<>typename<>"List")
  -- _usePatternSynonyms = True
  -- _useSemigroup = True
