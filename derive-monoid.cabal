@@ -1,0 +1,41 @@
+name: derive-monoid
+version: 0.0.0
+cabal-version: >=1.10
+build-type: Simple
+license: MIT
+license-file: LICENSE
+maintainer: samboosalis@gmail.com
+homepage: https://github.com/sboosali/derive-monoid
+category: derive-monoid 
+author: Spiros Boosalis
+extra-source-files:
+    README.md
+synopsis: derive Semigroup/Monoid/IsList
+description:
+ when your type can hold a list of itself, you can derive simple (but total\/lawful) Semigroup\/Monoid\/IsList instances with TemplateHaskell. 
+ . 
+ see the <https://hackage.haskell.org/package/derive-monoid/docs/Derive-Monoid.html Derive.Monoid> module for examples and documentation. 
+
+library
+ hs-source-dirs: sources
+ default-language: Haskell2010
+
+ exposed-modules:
+  Derive.Monoid
+  Derive.Monoid.Internal 
+  Derive.Monoid.Main
+
+ build-depends:
+    base ==4.8.* 
+  , semigroups ==0.16.* 
+  , template-haskell ==2.10.*
+
+
+executable example
+ hs-source-dirs: .
+ default-language: Haskell2010
+ main-is: Main.hs
+ build-depends:
+    base ==4.8.* 
+  , derive-monoid ==0.0.0
+
