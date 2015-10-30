@@ -20,19 +20,27 @@ AppT (AppT (ConT Data.Either.Either) (VarT a)) (VarT b)
 -- Exception when trying to run compile-time code:
 --   the name {{GHC.Types.False}} has no arity (maybe it's been given to some macro that expects a Type?)
 
+output is deterministic.
+
 -}
 saturateT :: Name -> Q Type 
 -- saturateT = conT
 saturateT n = do
  arity_ <- getArityT n
  let arity = maybe (error$ messageNoArity n) id arity_
- unless (arity <= 26) $ (error$ messageHugeArity n)
- let arguments = take arity (map (mkName . (:[])) ['a'..'z']) 
+ let arguments = take arity (map mkName alphabeticalVariables) 
  return$ foldl AppT (ConT n) (VarT <$> arguments) 
  where 
  messageNoArity n = "the name {{" ++ show n ++ "}} has no arity (maybe it's been given to some macro that expects a Type?)"
- messageHugeArity n = "the name {{" ++ show n ++ "}} has too big an arity (over 26)"
 
+{-| >>> take 3 alphabeticalVariables 
+["a","b","c"]
+-}
+alphabeticalVariables :: [String]
+alphabeticalVariables = map (:[]) ['a'..'z'] ++ do
+  x <- ['a'..'z']
+  y <- ['a'..'z']
+  return [x, y]
 
 {-| get the arity of a (type) name. 
 
