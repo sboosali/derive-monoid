@@ -7,6 +7,13 @@ import Language.Haskell.TH
 import GHC.Exts (IsList (..))
 
 
+data DeriveListConfig = DeriveListConfig
+ { _makeEmptyName  :: String -> String 
+ , _makeToListName :: String -> String 
+ -- , _usePatternSynonyms :: Bool
+ -- , _useSemigroup :: Bool
+ }
+
 data DeriveListNames = DeriveListNames
  { theType :: Name 
  , theConstructor :: Name 
@@ -15,49 +22,38 @@ data DeriveListNames = DeriveListNames
  } deriving (Show,Eq,Ord)
 
 
-data DeriveListConfig = DeriveListConfig
- { _makeEmptyName  :: String -> String 
- , _makeToListName :: String -> String 
- -- , _usePatternSynonyms :: Bool
- -- , _useSemigroup :: Bool
- }
-
-
-defaultDeriveListConfig :: DeriveListConfig 
-defaultDeriveListConfig = DeriveListConfig{..}
- where
- _makeEmptyName = (\typename -> "empty"<>typename)
- _makeToListName  = (\typename -> "to"<>typename<>"List")
- -- _usePatternSynonyms = True
- -- _useSemigroup = True
-
-
-{-| can debug 'deriveList' with:  
-
-@
-print $ makeDeriveListNames defaultDeriveListConfig ''T 'C
-@
-
--}
-makeDeriveListNames :: DeriveListConfig -> Name -> Name -> DeriveListNames
-makeDeriveListNames DeriveListConfig{..} theType theConstructor = DeriveListNames{..}
- where 
- theEmpty  = mkName $ _makeEmptyName  (nameBase theType) 
- theToList = mkName $ _makeToListName (nameBase theType) 
-
 
 {-| derives 'Semigroup', 'Monoid', 'IsList'.  
-
 -}
 deriveList :: Name -> Name -> DecsQ 
 deriveList = deriveListWith defaultDeriveListConfig
 
 
+{-| derives 'Semigroup', 'Monoid' only. 
+-}
+deriveMonoid :: Name -> Name -> DecsQ 
+deriveMonoid = deriveMonoidWith defaultDeriveListConfig
+
+
+{-| derives 'Semigroup' only. 
+-}
+deriveSemigroup :: Name -> Name -> DecsQ 
+deriveSemigroup = deriveSemigroupWith defaultDeriveListConfig
+
+
+{-| derives 'IsList' only.  
+-}
+deriveIsList :: Name -> Name -> DecsQ 
+deriveIsList = deriveIsListWith defaultDeriveListConfig
+
+
+{-| derives 'Semigroup', 'Monoid', 'IsList'.  
+-}
 deriveListWith :: DeriveListConfig -> Name -> Name -> DecsQ 
 deriveListWith config@DeriveListConfig{..} theType theConstructor = fmap concat . traverse id $ 
- [ deriveSemigroup names 
- , deriveMonoid names 
- , deriveIsList names 
+ [ deriveSemigroup_ names 
+ , deriveMonoid_ names 
+ , deriveIsList_ names 
  , makeEmpty names 
  , makeToList names 
  ] 
@@ -65,15 +61,50 @@ deriveListWith config@DeriveListConfig{..} theType theConstructor = fmap concat 
  names = makeDeriveListNames config theType theConstructor 
 
 
-{-| drives 'Semigroup'.  
+{-| derives 'Semigroup', 'Monoid' only. 
+-}
+deriveMonoidWith :: DeriveListConfig -> Name -> Name -> DecsQ 
+deriveMonoidWith config@DeriveListConfig{..} theType theConstructor = fmap concat . traverse id $ 
+ [ deriveSemigroup_ names 
+ , deriveMonoid_ names 
+ , makeEmpty names 
+ , makeToList names 
+ ] 
+ where 
+ names = makeDeriveListNames config theType theConstructor 
+
+
+{-| derives 'Semigroup' only. 
+-}
+deriveSemigroupWith :: DeriveListConfig -> Name -> Name -> DecsQ 
+deriveSemigroupWith config@DeriveListConfig{..} theType theConstructor = fmap concat . traverse id $ 
+ [ deriveSemigroup_ names 
+ , makeToList names 
+ ] 
+ where 
+ names = makeDeriveListNames config theType theConstructor 
+
+
+{-| derives 'IsList' only.  
+-}
+deriveIsListWith :: DeriveListConfig -> Name -> Name -> DecsQ 
+deriveIsListWith config@DeriveListConfig{..} theType theConstructor = fmap concat . traverse id $ 
+ [ deriveIsList_ names 
+ , makeToList names 
+ ] 
+ where 
+ names = makeDeriveListNames config theType theConstructor 
+
+
+{-| 
 
 needs no constraints.
  
 assumes 'makeToList'
 
 -}
-deriveSemigroup :: DeriveListNames -> DecsQ 
-deriveSemigroup DeriveListNames{..} = do 
+deriveSemigroup_ :: DeriveListNames -> DecsQ 
+deriveSemigroup_ DeriveListNames{..} = do 
  [d| instance Semigroup $theTypeT where
        (<>) x y = $theConstructorE ($theToListE x <> $theToListE y) |]
 
@@ -83,15 +114,15 @@ deriveSemigroup DeriveListNames{..} = do
  theToListE = varE theToList 
 
 
-{-| derives 'Monoid'.  
+{-| 
 
 needs no constraints.
 
-assumes 'deriveSemigroup', 'makeEmpty'
+assumes 'deriveSemigroup_', 'makeEmpty'
 
 -}
-deriveMonoid :: DeriveListNames -> DecsQ 
-deriveMonoid DeriveListNames{..} = do 
+deriveMonoid_ :: DeriveListNames -> DecsQ 
+deriveMonoid_ DeriveListNames{..} = do 
  [d| instance Monoid $theTypeT where
       mempty = $theEmptyE
       mappend = (<>) |]
@@ -101,15 +132,15 @@ deriveMonoid DeriveListNames{..} = do
  theEmptyE = varE theEmpty 
 
 
-{-| derives 'IsList'.  
+{-| 
 
 needs no constraints.
 
 assumes 'makeToList'
 
 -}
-deriveIsList :: DeriveListNames -> DecsQ 
-deriveIsList DeriveListNames{..} = do 
+deriveIsList_ :: DeriveListNames -> DecsQ 
+deriveIsList_ DeriveListNames{..} = do 
  [d| instance IsList $theTypeT where
        type Item $theTypeT = $theTypeT
        fromList = $theConstructorE
@@ -166,3 +197,29 @@ makeToList DeriveListNames{..} = traverse id [signatureD, definitionD]
 --    $theListName t = [t]
 -- ]
 
+
+
+{-| can debug 'deriveList' with:  
+
+@
+print $ makeDeriveListNames 'defaultDeriveListConfig' \'\'T \'C
+@
+
+-}
+makeDeriveListNames :: DeriveListConfig -> Name -> Name -> DeriveListNames
+makeDeriveListNames DeriveListConfig{..} theType theConstructor = DeriveListNames{..}
+ where 
+ theEmpty  = mkName $ _makeEmptyName  (nameBase theType) 
+ theToList = mkName $ _makeToListName (nameBase theType) 
+
+
+{-| by default, the functions generated for a type @"T"@ are @"emptyT"@ and @"toTList"@. 
+
+-}
+defaultDeriveListConfig :: DeriveListConfig 
+defaultDeriveListConfig = DeriveListConfig{..}
+ where
+ _makeEmptyName = (\typename -> "empty"<>typename)
+ _makeToListName  = (\typename -> "to"<>typename<>"List")
+ -- _usePatternSynonyms = True
+ -- _useSemigroup = True

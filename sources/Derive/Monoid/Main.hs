@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, TypeFamilies, OverloadedLists #-} -- TODO PatternSynonyms, 
+{-# LANGUAGE TemplateHaskell, TypeFamilies, OverloadedLists #-} -- TODO PatternSynonyms, 
 {-# OPTIONS_GHC -ddump-splices #-} -- for debugging 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -18,8 +18,8 @@ data Elisp
  | ElispSexp [Elisp]
  deriving (Show)
 
-deriveList ''Elisp 'ElispSexp
-
+-- deriveList ''Elisp 'ElispSexp
+deriveMonoid ''Elisp 'ElispSexp
 
 {-| tests all instances and declarations 
 
@@ -31,5 +31,5 @@ main = do
  putStrLn "" 
  print$ emptyElisp
  print$ toElispList (ElispAtom (Right 1))
- print$ [ElispAtom (Left "+"), ElispAtom (Right 1), ElispAtom (Right 2)] <> mempty <> ElispAtom (Right 3)
+ print$ ElispSexp [ElispAtom (Left "+"), ElispAtom (Right 1), ElispAtom (Right 2)] <> mempty <> ElispAtom (Right 3)
  return() 

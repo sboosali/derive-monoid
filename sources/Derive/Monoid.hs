@@ -1,6 +1,31 @@
 {-# OPTIONS_HADDOCK not-home #-}
 
-{-| 
+module Derive.Monoid
+ ( -- $introduction
+
+   -- $example
+
+   -- $instances
+
+   deriveList
+ , deriveMonoid
+ , deriveSemigroup
+ , deriveIsList
+ , DeriveListConfig(..)
+ , deriveListWith 
+ , deriveMonoidWith
+ , deriveSemigroupWith
+ , deriveIsListWith
+   -- $alternatives
+
+ ) where 
+import Derive.Monoid.Internal 
+
+
+
+
+
+{- $introduction
 
 when your type can hold a list of itself, 'deriveList' can generate instances for: 
 
@@ -17,53 +42,92 @@ data T = ... | C [T] | ...
 deriveList ''T 'C
 @
 
-For example: 
+-} 
 
-@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, TypeFamilies, PatternSynonyms #-}
-{-# OPTIONS_GHC -ddump-splices #-}
-import Data.Semigroup 
-import GHC.Exts (IsList (..))
 
--- a sum type 
-data Elisp
- = ElispAtom (Either String Integer)
- | ElispSexp [Elisp]
 
-'deriveList' \'\'Elisp \'ElispSexp
-@
 
-generates: 
 
-@
-instance 'Semigroup' Elisp where
- ('<>') x y = ElispSexp (toElispList x <> toElispList y)
+-- $example
+-- = Examples 
+-- 
+-- this declaration: 
+-- 
+-- @
+-- 
+-- {-\# LANGUAGE TemplateHaskell, TypeFamilies \#-}    -- minimal extensions necessary 
+-- {-\# OPTIONS_GHC -ddump-splices \#-}                -- prints out the generated code 
+-- 
+-- import GHC.Exts (IsList (..))                     -- minimal imports necessary 
+-- import Data.Semigroup                             -- from the <https://hackage.haskell.org/package/semigroups semigroups> package 
+-- 
+-- -- a sum type 
+-- data Elisp
+--  = ElispAtom (Either String Integer)
+--  | ElispSexp [Elisp]
+-- 
+-- 'deriveList' \'\'Elisp \'ElispSexp
+-- @
+-- 
+-- generates these instances: 
+-- 
+-- @
+-- instance 'Semigroup' Elisp where
+--  ('<>') x y = ElispSexp (toElispList x '<>' toElispList y)
+-- 
+-- instance 'Monoid' Elisp where
+--  'mempty' = EmptyElisp
+--  'mappend' = ('<>')
+-- 
+-- instance 'IsList' Elisp where
+--  type 'Item' Elisp = Elisp
+--  'fromList' = ElispSexp
+--  'toList' = toElispList 
+-- 
+-- emptyElisp :: ElispSexp
+-- emptyElisp = ElispSexp []
+-- 
+-- toElispList :: Elisp -> [Elisp]
+-- toElispList (ElispSexp ts) = ts
+-- toElispList t = [t]
+-- 
+-- @ 
+-- 
 
-instance 'Monoid' Elisp where
- 'mempty' = EmptyElisp
- 'mappend' = (<>)
 
-instance 'IsList' Elisp where
- type 'Item' Elisp = Elisp
- 'fromList' = ElispSexp
- 'toList' = toElispList 
 
-emptyElisp :: ElispSexp
-emptyElisp = ElispSexp []
 
-toElispList :: Elisp -> [Elisp]
-toElispList (ElispSexp ts) = ts
-toElispList t = [t]
 
-@ 
+{- $instances
 
-alternatives: 
+= Selecting Instances 
+if you don't want all three instances, you can use one of: 
+
+* 'deriveMonoid'
+* 'deriveSemigroup'
+* 'deriveIsList'
+
+but only one, as they would generate duplicate declarations. 
+
+-} 
+
+
+
+
+
+{- $alternatives
+
+= Alternatives to @derive-monoid@ 
 
 * manual instances.  
 * @GeneralizeNewtypeDeriving@: works with @newtype@, but not with @data@. 
 * the <http://hackage.haskell.org/package/derive derive> package: derives a different monoid (i.e. pairwise appending, when your type is a product type), which doesn't work for sum types. it also doesn't work with Semigroup. 
 
 -} 
+
+
+
+
 
 {-
 
@@ -88,7 +152,3 @@ instance 'Monoid' Elisp where
 @
 
 -}
-
-module Derive.Monoid ( deriveList ) where 
-import Derive.Monoid.Internal 
-
