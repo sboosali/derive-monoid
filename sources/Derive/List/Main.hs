@@ -20,6 +20,12 @@ data Elisp
 
 deriveList ''Elisp 'ElispSexp
 
+-- | the generated emptyElisp can be documented 
+emptyElisp  :: Elisp 
+-- | the generated appendElisp can be documented 
+appendElisp :: Elisp -> Elisp -> Elisp
+-- | the generated toElispList can be documented 
+toElispList :: Elisp -> [Elisp]
 
 {-| tests all instances and declarations 
 

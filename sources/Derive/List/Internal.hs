@@ -163,13 +163,9 @@ deriveIsList_ DeriveListNames{..} = do
 
 -}
 makeEmpty :: DeriveListNames -> DecsQ
-makeEmpty DeriveListNames{..} = return [signatureD, definitionD]
+makeEmpty DeriveListNames{..} = return [definitionD]
  where 
-
- signatureD = SigD theEmpty (ConT theType) 
-
  definitionD = FunD theEmpty [Clause [] (NormalB bodyE) []]
-
  bodyE = (ConE theConstructor `AppE` (ListE []))
 
 -- makeEmpty :: DeriveListNames -> DecsQ
@@ -200,11 +196,8 @@ makeAppend DeriveListNames{..} = do
 
 
 makeToList :: DeriveListNames -> DecsQ
-makeToList DeriveListNames{..} = traverse id [signatureD, definitionD]
+makeToList DeriveListNames{..} = traverse id [definitionD]
  where 
-
- signatureD = SigD theToList <$> [t|$theTypeT -> [$theTypeT]|]  
-
  definitionD = do
   tsN <- newName "ts"
   tN <- newName "t"
@@ -212,8 +205,6 @@ makeToList DeriveListNames{..} = traverse id [signatureD, definitionD]
    [ Clause [ConP theConstructor [VarP tsN]] (NormalB (VarE tsN))        [] 
    , Clause [VarP tN]                        (NormalB (ListE [VarE tN])) [] 
    ]
-
- theTypeT = conT theType 
 
 -- [d|
 --    $theListName :: $theType -> [$theType]

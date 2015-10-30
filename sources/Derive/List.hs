@@ -5,7 +5,7 @@ module Derive.List
 
    -- $example
 
-   -- $instances
+   -- $conclusion
 
    deriveList
  , deriveMonoid
@@ -98,7 +98,28 @@ deriveList ''T 'C
 
 
 
-{- $instances
+{- $conclusion
+
+
+= Documentation 
+
+you can document functions/variables (though not instances), by placing their signatures __after__ the macro:
+
+@
+data Elisp
+ = ElispAtom (Either String Integer)
+ | ElispSexp [Elisp]
+
+'deriveList' \'\'Elisp \'ElispSexp
+
+-- | ...
+emptyElisp  :: Elisp 
+-- | ...
+appendElisp :: Elisp -> Elisp -> Elisp
+-- | ...
+toElispList :: Elisp -> [Elisp]
+@
+
 
 = Selecting Instances 
 if you don't want all three instances, you can use one of: 
@@ -108,6 +129,7 @@ if you don't want all three instances, you can use one of:
 * 'deriveIsList'
 
 but only one, as they would generate duplicate declarations. 
+
 
 -} 
 
