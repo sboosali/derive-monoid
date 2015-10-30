@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, OverloadedLists #-} -- TODO PatternSynonyms, 
-{-# OPTIONS_GHC -ddump-splices #-} -- for debugging 
+{-# OPTIONS_GHC -ddump-splices -fno-warn-missing-signatures #-} -- for debugging 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-| (see source) 
@@ -18,13 +18,12 @@ data Elisp
  | ElispSexp [Elisp]
  deriving (Show)
 
--- deriveList ''Elisp 'ElispSexp
-deriveMonoid ''Elisp 'ElispSexp
+deriveList ''Elisp 'ElispSexp
+
 
 {-| tests all instances and declarations 
 
 -}
-main :: IO () 
 main = do
  putStrLn "" 
  print $ makeDeriveListNames defaultDeriveListConfig ''Elisp 'ElispSexp
@@ -32,4 +31,4 @@ main = do
  print$ emptyElisp
  print$ toElispList (ElispAtom (Right 1))
  print$ ElispSexp [ElispAtom (Left "+"), ElispAtom (Right 1), ElispAtom (Right 2)] <> mempty <> ElispAtom (Right 3)
- return() 
+

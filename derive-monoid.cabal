@@ -39,3 +39,21 @@ executable example
     base ==4.8.* 
   , derive-monoid ==0.0.0
 
+
+test-suite tests
+ hs-source-dirs: tests 
+ main-is: Tests.hs
+ type: exitcode-stdio-1.0
+ default-language: Haskell2010
+
+ other-modules:
+  Build 
+  Build.Monoid   
+  Build.Semigroup
+  Build.IsList
+
+ build-depends:
+    base ==4.8.* 
+  , derive-monoid ==0.0.0
+  , semigroups ==0.16.* 
+
