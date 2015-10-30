@@ -110,15 +110,13 @@ assumes 'makeAppend'
 deriveSemigroup_ :: DeriveListNames -> DecsQ 
 deriveSemigroup_ DeriveListNames{..} = do 
  [d| instance Semigroup $theTypeT where
-       (<>) = $theAppendE |]
+       (<>) = $theAppendE
+       {-# INLINEABLE (<>) #-} |]
 
  where 
  theTypeT = conT theType 
  theAppendE = varE theAppend 
 
--- TODO pragmas 
-
--- TODO no signatures 
 
 {-| 
 
@@ -131,7 +129,9 @@ deriveMonoid_ :: DeriveListNames -> DecsQ
 deriveMonoid_ DeriveListNames{..} = do 
  [d| instance Monoid $theTypeT where
       mempty = $theEmptyE
-      mappend = $theAppendE |]
+      {-# INLINEABLE mempty #-}
+      mappend = $theAppendE
+      {-# INLINEABLE mappend #-} |]
 
  where 
  theTypeT = conT theType 
@@ -149,9 +149,11 @@ assumes 'makeToList'
 deriveIsList_ :: DeriveListNames -> DecsQ 
 deriveIsList_ DeriveListNames{..} = do 
  [d| instance IsList $theTypeT where
-       type Item $theTypeT = $theTypeT
-       fromList = $theConstructorE
-       toList = $theToListE |]
+      type Item $theTypeT = $theTypeT
+      fromList = $theConstructorE
+      {-# INLINEABLE fromList #-}
+      toList = $theToListE 
+      {-# INLINEABLE toList #-} |]
 
  where 
  theTypeT = conT theType 
@@ -163,10 +165,11 @@ deriveIsList_ DeriveListNames{..} = do
 
 -}
 makeEmpty :: DeriveListNames -> DecsQ
-makeEmpty DeriveListNames{..} = return [definitionD]
+makeEmpty DeriveListNames{..} = return [definitionD, inlinableD]
  where 
  definitionD = FunD theEmpty [Clause [] (NormalB bodyE) []]
- bodyE = (ConE theConstructor `AppE` (ListE []))
+ bodyE = ConE theConstructor `AppE` (ListE [])
+ inlinableD = PragmaD (InlineP theEmpty Inlinable ConLike AllPhases)
 
 -- makeEmpty :: DeriveListNames -> DecsQ
 -- makeEmpty DeriveListNames{..} = patternQD 
@@ -185,19 +188,22 @@ assumes 'makeToList'
 -}
 makeAppend :: DeriveListNames -> DecsQ
 makeAppend DeriveListNames{..} = do
- [d| $theAppendP = \x y -> $theConstructorE ($theToListE x <> $theToListE y) |]
+ definitionD <- [d| $theAppendP = \x y -> $theConstructorE ($theToListE x <> $theToListE y) |]
+ return$ concat [definitionD, inlinableD]
 
  where 
  theConstructorE = conE theConstructor 
  theToListE = varE theToList 
  theAppendP = varP theAppend 
+ inlinableD = [PragmaD (InlineP theAppend Inlinable FunLike AllPhases)]
 
  -- [d| $theAppendP x y = $theConstructorE ($theToListE x <> $theToListE y) |]
 
 
 makeToList :: DeriveListNames -> DecsQ
-makeToList DeriveListNames{..} = traverse id [definitionD]
+makeToList DeriveListNames{..} = traverse id [definitionD, inlinableD]
  where 
+
  definitionD = do
   tsN <- newName "ts"
   tN <- newName "t"
@@ -205,6 +211,8 @@ makeToList DeriveListNames{..} = traverse id [definitionD]
    [ Clause [ConP theConstructor [VarP tsN]] (NormalB (VarE tsN))        [] 
    , Clause [VarP tN]                        (NormalB (ListE [VarE tN])) [] 
    ]
+
+ inlinableD = return$ PragmaD (InlineP theToList Inlinable FunLike AllPhases)
 
 -- [d|
 --    $theListName :: $theType -> [$theType]
