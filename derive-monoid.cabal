@@ -5,7 +5,7 @@ build-type: Simple
 license: MIT
 license-file: LICENSE
 maintainer: samboosalis@gmail.com
-homepage: https://github.com/sboosali/derive-monoid
+homepage: https://github.com/sboosali/derive-monoid#readme 
 category: derive-monoid 
 author: Spiros Boosalis
 extra-source-files:
@@ -14,7 +14,21 @@ synopsis: derive Semigroup/Monoid/IsList
 description:
  when your type can hold a list of itself, you can derive simple (but total\/lawful) Semigroup\/Monoid\/IsList instances with TemplateHaskell. 
  . 
- see the <https://hackage.haskell.org/package/derive-monoid/docs/Derive-Monoid.html Derive.Monoid> module for examples and documentation. 
+ see the <https://hackage.haskell.org/package/derive-monoid/docs/Derive-List.html Derive.List> for examples and documentation. 
+ browse the <https://github.com/sboosali/derive-monoid/tree/master/test/Build/Derive/List test suite> for more (buildable) examples:  
+ .
+ * <https://github.com/sboosali/derive-monoid/blob/master/test/Build/Derive/List/HigherKind.hs HigherKind>
+ .
+ * <https://github.com/sboosali/derive-monoid/blob/master/test/Build/Derive/List/IsList.hs IsList> 
+ .
+ * <https://github.com/sboosali/derive-monoid/blob/master/test/Build/Derive/List/Monoid.hs Monoid>
+ .
+ * <https://github.com/sboosali/derive-monoid/blob/master/test/Build/Derive/List/Semigroup.hs Semigroup>
+
+source-repository head
+    type: git
+    location: https://github.com/sboosali/derive-monoid
+
 
 library
  hs-source-dirs: sources
@@ -28,7 +42,7 @@ library
 
  build-depends:
     base ==4.8.* 
-  , semigroups ==0.16.* 
+  , semigroups ==0.18.* 
   , template-haskell ==2.10.*
 
 
@@ -38,7 +52,7 @@ executable example
  main-is: Main.hs
  build-depends:
     base ==4.8.* 
-  , derive-monoid ==0.0.0
+  , derive-monoid 
 
 
 test-suite tests
@@ -56,6 +70,6 @@ test-suite tests
 
  build-depends:
     base ==4.8.* 
-  , derive-monoid ==0.0.0
-  , semigroups ==0.16.* 
+  , derive-monoid 
+  , semigroups ==0.18.* 
 

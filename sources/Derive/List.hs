@@ -128,7 +128,7 @@ works on type constructors of any kind. that is, a polymorphic @Elisp@ would wor
 @
 data Elisp a 
  = ElispAtom a 
- | ElispSexp [Elisp]
+ | ElispSexp [Elisp a]
 
 'deriveList' \'\'Elisp \'ElispSexp
 
@@ -157,7 +157,8 @@ but only one, as they would generate duplicate declarations.
 
 * manual instances.  
 * @GeneralizeNewtypeDeriving@: works with @newtype@, but not with @data@. 
-* the <http://hackage.haskell.org/package/derive derive> package: derives a different monoid (i.e. pairwise appending, when your type is a product type), which doesn't work for sum types. it also doesn't work with Semigroup. 
+* the <http://hackage.haskell.org/package/semigroups semigroups> package: derives a different semigroup (i.e. pairwise appending, when your type is a product type), which isn't valid for sum types. 
+* the <http://hackage.haskell.org/package/derive derive> package: derives a different monoid (i.e. pairwise appending, when your type is a product type), which isn't valid for sum types. it also doesn't work with Semigroup. 
 
 -} 
 
