@@ -73,8 +73,8 @@ TODO saturate @type@ synonym0
 -}
 getArityD :: Dec -> Maybe Int
 getArityD = \case 
- DataD    _ _ variables _ _ -> Just (length variables)
- NewtypeD _ _ variables _ _ -> Just (length variables)
+ DataD    _ _ variables _ _ _ -> Just (length variables)
+ NewtypeD _ _ _ variables _ _ -> Just (length variables)
  -- TySynD Name [TyVarBndr] Type
  _ -> Nothing 
 
