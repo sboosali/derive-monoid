@@ -41,8 +41,7 @@ library
   Derive.List.Extra 
 
  build-depends:
-    base >=4.8 && <5.0
-  , semigroups
+    base >=4.9 && <5.0
   , template-haskell >=2.10
 
 
